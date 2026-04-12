@@ -12,3 +12,6 @@ Event-driven image annotation project using AI and vector databases.
 - Vector Index
 
 #### Elena Berrios eberrios@bu.edu and Louis Jimenez-Hernandez louisjh@bu.edu ####
+Elena made the initial empty project structure.
+
+Elena and Louis worked together equally to define events, create the broker, and create initial unit tests.
