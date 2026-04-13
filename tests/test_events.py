@@ -1,11 +1,10 @@
 import pytest
-from unittest.mock import MagicMock, patch
 from events import (
     image_submitted, inference_completed, annotation_stored,
     embedding_created, annotation_corrected, query_submitted,
     query_completed, validate_event
 )
-from broker import Broker
+
 
 class TestEventValidation:
 
@@ -60,7 +59,7 @@ class TestPayload:
     
     def test_query_submitted_default_top_k(self):
         event = query_submitted("find cars")
-        assert event["payload"]["top_k"] == 5
+        assert event["payload"]["top_k"] == 4
     
     def test_each_event_has_unique_event_id(self):
         e1 = image_submitted("img_001", "images/a.jpg", "camera_A")

@@ -1,7 +1,7 @@
 # broker.py
 
 import json
-import redit
+import redis
 from events import validate_event
 
 # broker will act as the middleman between the events.py schemas and the actual Redis data
