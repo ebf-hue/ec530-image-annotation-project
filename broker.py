@@ -35,5 +35,6 @@ class Broker:
 
     # listen
     def listen(self):
-        self.pubsub.run_forever()
+        for _ in self.pubsub.listen():
+            pass
         
