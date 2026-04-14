@@ -15,11 +15,12 @@ class Broker:
     def publish(self, event: dict):
         # validate event
         if not validate_event(event):
-            print(f"[oops] bad event: {event}")
-            return
+            logger.warning("Oops, rejected malformed event: %s", event)
+            return False
         topic = event["topic"]
         # json.dumps converts to json string
         self.client.publish(topic, json.dumps(event))
+        return True
 
     # subscribe
     def subscribe(self, topic: str, handler):
