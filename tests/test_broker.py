@@ -9,7 +9,8 @@ class TestErrorFields:
         [
             {"type": "Uma Musume"},
             {"type": "publish", "topic": "Mejiro Palmer"},
-            {"type": "publish", "timestamp": "MagicMock"}
+            {"type": "publish", "topic": "query.completed", "timestamp": "Daitaku Helios"},
+            {'type': 'publish', 'topic': 'image.submitted', 'event_id': 'Daiichi Ruby', 'payload': {'image_id': 'img_001', 'path': 'images/street.jpg', 'source': 'camera_A'}}
         ]
     )
     def test_return_broker_rejects_malformed_event(self, event):
