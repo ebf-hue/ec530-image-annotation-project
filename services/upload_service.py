@@ -3,5 +3,7 @@
 
 from events import image_submitted
 
+#publishes: image.submitted
 def handle_cli_image(broker, image_id: str, path: str, source: str):
-    pass
+    event = image_submitted(image_id=image_id, path=path, source=source)
+    return broker.publish(event)
