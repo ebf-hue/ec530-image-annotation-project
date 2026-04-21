@@ -15,7 +15,6 @@ def image_submitted(image_id: str, path: str, source: str) -> dict:
     return _base_event("image.submitted", {
         "image_id": image_id,
         "path": path,
-        "source": source,
     })
 
 def inference_completed(image_id: str, objects: list) -> dict:

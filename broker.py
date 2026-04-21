@@ -3,11 +3,15 @@
 import json
 import redis
 from events import validate_event
+import logging
+
+logger = logging.getLogger(__name__)
 
 # broker will act as the middleman between the events.py schemas and the actual Redis data
 class Broker:
     def __init__(self):
         # to pub, localhost on port 5678
+        
         self.client = redis.Redis(host = "localhost", port = 5678, decode_responses=True)
         # to sub
         self.pubsub = self.client.pubsub()
