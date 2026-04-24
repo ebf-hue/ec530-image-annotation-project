@@ -47,7 +47,7 @@ class TestPayload:
         assert event["payload"]["objects"] == objects
 
     def test_annotation_stored_payload(self):
-        event = annotation_stored("img_001", "doc_001")
+        event = annotation_stored("img_001", "doc_001", "images/a.jpg")
         assert event["topic"] == "annotation.stored"
         assert event["payload"]["doc_id"] == "doc_001"
     
