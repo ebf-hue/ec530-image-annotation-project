@@ -42,7 +42,7 @@ class TestPayload:
 
     def test_inference_completed_payload(self):
         objects = [{"label": "car", "bbox": [0,0,100,100], "conf": 0.9}]
-        event = inference_completed("img_001", objects)
+        event = inference_completed("img_001", objects, "images/car.jpg")
         assert event["topic"] == "inference.completed"
         assert event["payload"]["objects"] == objects
 
