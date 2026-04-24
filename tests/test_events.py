@@ -22,8 +22,8 @@ class TestEventValidation:
         "event",
         [
             image_submitted("img_001", "images/street.jpg"),
-            inference_completed("img_001", [{"label": "car", "bbox": [0,0,100,100], "conf": 0.9}]),
-            annotation_stored("img_001", "doc_001"),
+            inference_completed("img_001", [{"label": "car", "bbox": [0,0,100,100], "conf": 0.9}], "images/car.jpg"),
+            annotation_stored("img_001", "doc_001", "images/a.jpg"),
             embedding_created("img_001", [0.1, 0.2, 0.3]),
             annotation_corrected("img_001", {"label_old": "car", "label_new": "truck"}),
             query_submitted("find cars"),
