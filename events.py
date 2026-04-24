@@ -11,22 +11,24 @@ def _base_event(topic: str, payload: dict) -> dict:
         "payload": payload,
     }
 
-def image_submitted(image_id: str, path: str, source: str) -> dict:
+def image_submitted(image_id: str, path: str) -> dict:
     return _base_event("image.submitted", {
         "image_id": image_id,
         "path": path,
     })
 
-def inference_completed(image_id: str, objects: list) -> dict:
+def inference_completed(image_id: str, objects: list,  path: str) -> dict:
     return _base_event("inference.completed", {
         "image_id": image_id,
-        "objects": objects,  # list of {label, bbox, conf}
+        "objects": objects, 
+        "path": path,
     })
 
-def annotation_stored(image_id: str, doc_id: str) -> dict:
+def annotation_stored(image_id: str, doc_id: str, path: str) -> dict:
     return _base_event("annotation.stored", {
         "image_id": image_id,
         "doc_id": doc_id,
+        "path": path,
     })
 
 def embedding_created(image_id: str, vector: list) -> dict:

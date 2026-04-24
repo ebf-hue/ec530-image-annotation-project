@@ -28,5 +28,6 @@ def handle_image_submitted(event, broker):
     new_event = inference_completed(
         image_id=image_id,
         objects=objects,
+        path=path,
     )
     return broker.publish(new_event)
