@@ -21,7 +21,7 @@ class TestEventValidation:
     @pytest.mark.parametrize(
         "event",
         [
-            image_submitted("img_001", "images/street.jpg", "camera_A"),
+            image_submitted("img_001", "images/street.jpg"),
             inference_completed("img_001", [{"label": "car", "bbox": [0,0,100,100], "conf": 0.9}]),
             annotation_stored("img_001", "doc_001"),
             embedding_created("img_001", [0.1, 0.2, 0.3]),
@@ -61,8 +61,8 @@ class TestPayload:
         assert event["payload"]["top_k"] == 4
     
     def test_each_event_has_unique_event_id(self):
-        e1 = image_submitted("img_001", "images/a.jpg", "camera_A")
-        e2 = image_submitted("img_001", "images/a.jpg", "camera_A")
+        e1 = image_submitted("img_001", "images/a.jpg")
+        e2 = image_submitted("img_001", "images/a.jpg")
         assert e1["event_id"] != e2["event_id"]
 
     def test_annotation_corrected_payload(self):
