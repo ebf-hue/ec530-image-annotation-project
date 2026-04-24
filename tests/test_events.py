@@ -35,10 +35,9 @@ class TestEventValidation:
 
 class TestPayload:
     def test_image_submitted_payload(self):
-        event = image_submitted("img_001", "images/street.jpg", "camera_A")
+        event = image_submitted("img_001", "images/street.jpg")
         assert event["payload"]["image_id"] == "img_001"
         assert event["payload"]["path"] == "images/street.jpg"
-        assert event["payload"]["source"] == "camera_A"
         assert event["topic"] == "image.submitted"
 
     def test_inference_completed_payload(self):
