@@ -47,11 +47,15 @@ def handle_annotation_stored(event, broker):
     vector = _fake_embedding(path)
 
     # insert to mongodb vectors table we made earlier
-    vectors_collection.insert_one({
-        "_id": image_id, # mongodb requires _id
+    vectors_collection.replace_one(
+    {"_id": image_id},
+    {
+        "_id": image_id,
         "doc_id": doc_id,
-        "vector": vector
-    })
+        "vector": vector,
+    },
+    upsert=True,
+    )
 
     # publish the embedding created event
     new_event = embedding_created(image_id=image_id, vector=vector)
