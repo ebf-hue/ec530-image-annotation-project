@@ -23,7 +23,7 @@ class TestBrokerProperFunctionality:
     def test_successful_redis_call(self):
         broker = Broker()
         broker.client = MagicMock()
-        event = image_submitted("img_001", "images/street.jpg", "camera_A")
+        event = image_submitted("img_001", "images/street.jpg")
         broker.publish(event)
         broker.client.publish.assert_called_once()
 
