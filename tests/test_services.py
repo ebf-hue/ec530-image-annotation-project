@@ -1,11 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from services.inference_service import handle_image_submitted
-from services.document_db_service import (
-    handle_inference_completed,
-    get_document,
-    DOCUMENT_DB,
-)
+from services.document_db_service import handle_inference_completed, get_document
 from services.vector_db_service import handle_annotation_stored
 from events import image_submitted, inference_completed, annotation_stored
 from services.upload_service import handle_cli_image
@@ -30,28 +26,30 @@ class TestInferenceService:
 
 
 class TestDocumentDBService:
-    def setup_method(self):
-        DOCUMENT_DB.clear()
-
-    def test_inference_completed_stores_doc(self):
+    @patch("services.document_db_service.annotations_collection")
+    def test_inference_completed_stores_doc(self, mock_annotations_collection):
         broker = MagicMock()
 
         event = inference_completed(
             image_id="img_001",
-            objects=[
-                {"label": "car", "bbox": [12, 44, 188, 200], "conf": 0.93}
-            ],
+            objects=[{"label": "car", "bbox": [12, 44, 188, 200], "conf": 0.93}],
             path="images/street.jpg",
         )
 
         handle_inference_completed(event, broker)
 
-        doc = get_document("img_001")
+        mock_annotations_collection.replace_one.assert_called_once()
 
-        assert doc is not None
-        assert doc["image_id"] == "img_001"
-        assert doc["objects"][0]["label"] == "car"
-        assert doc["review"]["status"] == "uncorrected"
+        query_arg, doc_arg = mock_annotations_collection.replace_one.call_args[0][:2]
+        options = mock_annotations_collection.replace_one.call_args[1]
+
+        assert query_arg == {"_id": "img_001"}
+        assert doc_arg["_id"] == "img_001"
+        assert doc_arg["image_id"] == "img_001"
+        assert doc_arg["path"] == "images/street.jpg"
+        assert doc_arg["objects"][0]["label"] == "car"
+        assert doc_arg["review"]["status"] == "uncorrected"
+        assert options["upsert"] is True
 
         broker.publish.assert_called_once()
         published_event = broker.publish.call_args[0][0]
@@ -61,23 +59,37 @@ class TestDocumentDBService:
         assert published_event["payload"]["doc_id"] == "doc_img_001"
         assert published_event["payload"]["path"] == "images/street.jpg"
 
-    def test_idempotency_inference_does_not_duplicate_doc(self):
+    @patch("services.document_db_service.annotations_collection")
+    def test_idempotency_uses_replace_one_upsert(self, mock_annotations_collection):
         broker = MagicMock()
 
         event = inference_completed(
             image_id="img_001",
-            objects=[
-                {"label": "car", "bbox": [12, 44, 188, 200], "conf": 0.93}
-            ],
+            objects=[{"label": "car", "bbox": [12, 44, 188, 200], "conf": 0.93}],
             path="images/street.jpg",
         )
 
         handle_inference_completed(event, broker)
         handle_inference_completed(event, broker)
 
-        assert len(DOCUMENT_DB) == 1
-        assert get_document("img_001")["image_id"] == "img_001"
+        assert mock_annotations_collection.replace_one.call_count == 2
         assert broker.publish.call_count == 2
+
+        for call in mock_annotations_collection.replace_one.call_args_list:
+            assert call.args[0] == {"_id": "img_001"}
+            assert call.kwargs["upsert"] is True
+
+    @patch("services.document_db_service.annotations_collection")
+    def test_get_document_reads_from_mongo_collection(self, mock_annotations_collection):
+        mock_annotations_collection.find_one.return_value = {
+            "_id": "img_001",
+            "image_id": "img_001",
+        }
+
+        doc = get_document("img_001")
+
+        mock_annotations_collection.find_one.assert_called_once_with({"_id": "img_001"})
+        assert doc["image_id"] == "img_001"
 
 
 class TestVectorDBService:
