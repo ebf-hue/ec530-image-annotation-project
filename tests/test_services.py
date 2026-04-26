@@ -1,11 +1,12 @@
 from unittest.mock import MagicMock, patch
 
+from events import image_submitted, inference_completed, annotation_stored, query_submitted
 from services.inference_service import handle_image_submitted
 from services.document_db_service import handle_inference_completed, get_document
 from services.vector_db_service import handle_annotation_stored
-from events import image_submitted, inference_completed, annotation_stored
 from services.upload_service import handle_cli_image
 from services.cli import simulate_upload, simulate_query
+from services.query_service import handle_query_submitted
 
 
 class TestInferenceService:
@@ -176,3 +177,27 @@ class TestCLIService:
         assert published_event["topic"] == "query.submitted"
         assert published_event["payload"]["query_text"] == "horse"
         assert published_event["payload"]["top_k"] == 4
+
+class TestQueryService:
+    @patch("services.query_service.vectors_collection")
+    def test_query_submitted_returns_top_k_results(self, mock_vectors_collection):
+        broker = MagicMock()
+
+        mock_vectors_collection.find.return_value.limit.return_value = [
+            {"_id": "img_001", "doc_id": "doc_img_001", "vector": [0.1, 0.2]},
+            {"_id": "img_002", "doc_id": "doc_img_002", "vector": [0.3, 0.4]},
+        ]
+
+        event = query_submitted(query_text="horse", top_k=2)
+
+        handle_query_submitted(event, broker)
+
+        mock_vectors_collection.find.assert_called_once()
+        mock_vectors_collection.find.return_value.limit.assert_called_once_with(2)
+
+        broker.publish.assert_called_once()
+        published_event = broker.publish.call_args[0][0]
+
+        assert published_event["topic"] == "query.completed"
+        assert published_event["payload"]["query_text"] == "horse"
+        assert published_event["payload"]["results"] == ["img_001", "img_002"]
