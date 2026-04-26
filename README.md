@@ -11,6 +11,7 @@ Event-driven image annotation project using AI and vector databases.
 - Upload service
 - CLI
 
-- Vector Index
+### Features & Limitations ###
+The system's components communicate with each other through the broker. The image retrieval in response to user queries is mocked. The flow through CLI, upload_service, inference_service, documentDB, vectorDB is functional. However, image results will currently be the top k documents in the database regardless of query contents.
 
 #### Elena Berrios eberrios@bu.edu and Louis Jimenez-Hernandez louisjh@bu.edu ####
