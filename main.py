@@ -43,8 +43,8 @@ def main():
         print("\nChoose an option:")
         print("1. Upload Image")
         print("2. Run Query")
-        print("3, Show DocumentDB")
-        print("4, Show VectorDB")
+        print("3. Show DocumentDB")
+        print("4. Show VectorDB")
         print("5. Exit")
 
         choice = input("> ").strip()
