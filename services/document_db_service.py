@@ -1,42 +1,54 @@
 # Subscribes to: inference.completed
 # Publishes: annotation.stored
 
-from datetime import datetime, timezone
+from pymongo import MongoClient
 from events import annotation_stored
 
-DOCUMENT_DB = {}
+client = MongoClient("mongodb://localhost:27017/")
+db = client["image_annotation_db"]
+annotations_collection = db["annotations"]
+
 
 def _build_annotation_doc(event: dict) -> dict:
     payload = event["payload"]
-    image_id = payload["image_id"]
-    objects = payload["objects"]
 
     return {
-        "image_id": image_id,
-        "objects": objects,
+        "_id": payload["image_id"],
+        "image_id": payload["image_id"],
+        "path": payload["path"],
+        "objects": payload["objects"],
         "review": {
             "status": "uncorrected",
             "notes": [],
-        },
+        }
     }
 
+
 def handle_inference_completed(event, broker):
+    # simulate creating document + storing in document DB
     payload = event["payload"]
     image_id = payload["image_id"]
-    path = payload["path"]
-
-    # idempotency: do not create duplicate document state
-    if image_id in DOCUMENT_DB:
-        doc_id = f"doc_{image_id}"
-        stored_event = annotation_stored(image_id=image_id, doc_id=doc_id, path=path)
-        return broker.publish(stored_event)
-
-    doc = _build_annotation_doc(event)
-    DOCUMENT_DB[image_id] = doc
-
     doc_id = f"doc_{image_id}"
-    stored_event = annotation_stored(image_id=image_id, doc_id=doc_id, path=path)
+
+    # create document to store
+    doc = _build_annotation_doc(event)
+
+    # insert to mongodb annotations table we made earlier
+    annotations_collection.replace_one(
+        {"_id": image_id},
+        doc,
+        upsert=True,
+    )
+
+    # publish the embedding created event
+    stored_event = annotation_stored(
+        image_id=image_id,
+        doc_id=doc_id,
+        path=payload["path"],
+    )
+
     return broker.publish(stored_event)
 
+
 def get_document(image_id: str):
-    return DOCUMENT_DB.get(image_id)
+    return annotations_collection.find_one({"_id": image_id})
