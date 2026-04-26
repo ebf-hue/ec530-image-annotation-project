@@ -30,4 +30,5 @@ def handle_image_submitted(event, broker):
         objects=objects,
         path=path,
     )
+    print(f"[Inference Service] Inferenced completed for image with image_id={image_id}")
     return broker.publish(new_event)

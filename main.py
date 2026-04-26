@@ -1,0 +1,81 @@
+import threading
+import time
+
+from broker import Broker
+from events import query_submitted
+
+from services.upload_service import handle_cli_image
+from services.inference_service import handle_image_submitted
+from services.document_db_service import handle_inference_completed
+from services.vector_db_service import handle_annotation_stored
+
+
+# Used to let the CLI wait until the async upload pipeline finishes
+pipeline_done = threading.Event()
+
+
+def on_embedding_created():
+    pipeline_done.set()
+
+
+def main():
+    broker = Broker()
+
+    broker.subscribe("image.submitted", lambda e: handle_image_submitted(e, broker))
+    broker.subscribe("inference.completed", lambda e: handle_inference_completed(e, broker))
+    broker.subscribe("annotation.stored", lambda e: handle_annotation_stored(e, broker))
+    broker.subscribe("embedding.created", on_embedding_created)
+
+    listener_thread = threading.Thread(
+        target=broker.listen,
+        daemon=True,
+    )
+    listener_thread.start()
+
+    time.sleep(0.5)
+
+    print("=== Image Annotation System ===")
+
+    while True:
+        print("\nChoose an option:")
+        print("1. Upload Image")
+        print("2. Run Query")
+        print("3. Exit")
+
+        choice = input("> ").strip()
+
+        if choice == "1":
+            image_id = input("Enter image ID: ").strip()
+            path = input("Enter image path: ").strip()
+
+            if not image_id or not path:
+                print("Invalid input. Try again.")
+                continue
+
+            pipeline_done.clear()
+
+            handle_cli_image(broker, image_id=image_id, path=path)
+
+            pipeline_done.wait()
+
+        elif choice == "2":
+            query_text = input("Enter search query: ").strip()
+            top_k_input = input("Enter top_k (default 4): ").strip()
+
+            top_k = int(top_k_input) if top_k_input.isdigit() else 4
+
+            event = query_submitted(query_text=query_text, top_k=top_k)
+            broker.publish(event)
+
+            print(f"Submitted query '{query_text}' (top_k={top_k})")
+
+        elif choice == "3":
+            print("Exiting...")
+            break
+
+        else:
+            print("Invalid option. Try again.")
+
+
+if __name__ == "__main__":
+    main()

@@ -46,7 +46,7 @@ def handle_inference_completed(event, broker):
         doc_id=doc_id,
         path=payload["path"],
     )
-
+    print(f"[Document_DB] Stored annotation document for image with image_id={image_id}")
     return broker.publish(stored_event)
 
 

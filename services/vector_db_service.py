@@ -58,5 +58,6 @@ def handle_annotation_stored(event, broker):
     )
 
     # publish the embedding created event
+    print(f"[VectorDB] Stored embedding for image_id={image_id}")
     new_event = embedding_created(image_id=image_id, vector=vector)
     return broker.publish(new_event)
