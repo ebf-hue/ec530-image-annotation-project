@@ -6,17 +6,16 @@ from events import query_submitted
 
 from services.upload_service import handle_cli_image
 from services.inference_service import handle_image_submitted
-from services.document_db_service import handle_inference_completed
-from services.vector_db_service import handle_annotation_stored
+from services.document_db_service import handle_inference_completed, annotations_collection
+from services.vector_db_service import handle_annotation_stored, vectors_collection
 
 
 # Used to let the CLI wait until the async upload pipeline finishes
 pipeline_done = threading.Event()
 
-
-def on_embedding_created():
+#Marks the pipeline as being completed
+def on_embedding_created(event):
     pipeline_done.set()
-
 
 def main():
     broker = Broker()
@@ -40,10 +39,13 @@ def main():
         print("\nChoose an option:")
         print("1. Upload Image")
         print("2. Run Query")
-        print("3. Exit")
+        print("3, Show DocumentDB")
+        print("4, Show VectorDB")
+        print("5. Exit")
 
         choice = input("> ").strip()
 
+        #Upload image flow
         if choice == "1":
             image_id = input("Enter image ID: ").strip()
             path = input("Enter image path: ").strip()
@@ -51,11 +53,13 @@ def main():
             if not image_id or not path:
                 print("Invalid input. Try again.")
                 continue
-
+            
+            #Marks pipeline as not finished
             pipeline_done.clear()
 
             handle_cli_image(broker, image_id=image_id, path=path)
 
+            #Waits for pipeline to complete
             pipeline_done.wait()
 
         elif choice == "2":
@@ -70,6 +74,12 @@ def main():
             print(f"Submitted query '{query_text}' (top_k={top_k})")
 
         elif choice == "3":
+            print(list(annotations_collection.find()))
+
+        elif choice == "4":
+            print(list(vectors_collection.find()))
+
+        elif choice == "5":
             print("Exiting...")
             break
 
