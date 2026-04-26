@@ -8,22 +8,26 @@ from services.upload_service import handle_cli_image
 from services.inference_service import handle_image_submitted
 from services.document_db_service import handle_inference_completed, annotations_collection
 from services.vector_db_service import handle_annotation_stored, vectors_collection
+from services.query_service import handle_query_submitted
 
 
 # Used to let the CLI wait until the async upload pipeline finishes
 pipeline_done = threading.Event()
 
 #Marks the pipeline as being completed
-def on_embedding_created(event):
+def pipeline_finished(event):
     pipeline_done.set()
 
 def main():
     broker = Broker()
 
+    #Establish broker subscriptions
     broker.subscribe("image.submitted", lambda e: handle_image_submitted(e, broker))
     broker.subscribe("inference.completed", lambda e: handle_inference_completed(e, broker))
     broker.subscribe("annotation.stored", lambda e: handle_annotation_stored(e, broker))
-    broker.subscribe("embedding.created", on_embedding_created)
+    broker.subscribe("embedding.created", pipeline_finished)
+    broker.subscribe("query.submitted", lambda e: handle_query_submitted(e, broker))
+    broker.subscribe("query.completed", pipeline_finished)
 
     listener_thread = threading.Thread(
         target=broker.listen,
@@ -57,6 +61,7 @@ def main():
             #Marks pipeline as not finished
             pipeline_done.clear()
 
+            #Begins flow of CLI -> upload_service -> inference_service -> documentDB -> VectorDB
             handle_cli_image(broker, image_id=image_id, path=path)
 
             #Waits for pipeline to complete
@@ -68,10 +73,15 @@ def main():
 
             top_k = int(top_k_input) if top_k_input.isdigit() else 4
 
+             #Marks pipeline as not finished
+            pipeline_done.clear()
+
+            #Begins flow of CLI -> query_service
             event = query_submitted(query_text=query_text, top_k=top_k)
             broker.publish(event)
 
-            print(f"Submitted query '{query_text}' (top_k={top_k})")
+            #Waits for pipeline to complete
+            pipeline_done.wait()
 
         elif choice == "3":
             print(list(annotations_collection.find()))
